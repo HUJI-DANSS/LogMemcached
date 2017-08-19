@@ -38,7 +38,13 @@ We ran under the code with Ubuntu 14.10, kernel 3.16.0-43 with OFED version 3.18
 * binary API - currently, LogMemcached supports only the ASCII API, while Memcached supports a binary API too, that behaves a bit differently than the ASCII API.
 * multiple slaves - currently, Logmemcached support only one replication slave, but it should support at least 3 slaves, and it's better to support any arbitrary number of slaves (of course, there is a performance costs to replicate via multiple slaves).
 * read only mode - replication slaves should support a read only mode, in which, while they perform replication (i.e. while they act as slaves), they should allow incoming "get" commands, and forbid all others. Currently, there is no mechanism that forbids other commands. Be careful with "get" commands too. In LRU or LFU modes a get command can "issue" a "set" command. See more details in the paper.
-* TBA
+* slave connection in the middle of the process - slaves that connect not at the beginning may suffer from problems. Log's tail can be not in the beginning of the log, or the replication may be too slow, and the master will delete an item that is currently replicated. The slave is responsible for the replication, but it should be a bit smarter to avoid not stable state. Currently, the replication works well in "get" intensive workflows (and for a limited time in a "set" intensive workflows) when both the master and the slave started in the same time, and the replication speed is not much slower than the "set" speed. Also, see a "FIXME" comment in backup_rdma.c that describes a scenario where the system clearly fails. The scenario is fictional, but may represent a possible similar scenario.
+* reconnection mechanism - if the slave's connection is lost, it will not try to reconnect.
+* replication handler should stop running - it should stop its run in case the connection was lost, or a call to stop the replication where received.
+* the log is initialized as a one big chunk. If it's not possible, the system fails. Instead, it's possible to allocate many smaller chunks, and "notify" the slaves about that (write the information in an available to RDMA data structure).
+* item by item replication - LogMemcached replicate 2MB at a time (max. item's size is 1MB). Instead, it could replicate bigger chunks, making the replication faster. The size of the replicated item should be adjusted to the network and system's requirements in real time.
+* improving the replication benchmark - the benchmark, defined by "REPLICATION_BENCHMARK", can be improved, to give better results.
+* hard coded stuff and consts - many stuff, like some addresses, are hard coded and not configurable. Other stuff should use consts (or #define) instead of being a magic number (like item's min. size and log's remaining size calculation.
 ## Extending the research
 
 * TBA
