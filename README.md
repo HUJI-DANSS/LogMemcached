@@ -4,7 +4,7 @@ A source code of the paper LogMemcached - An RDMA based Continuous Cache Replica
 
 The original paper can be found here: http://dl.acm.org/citation.cfm?id=3098584
 
-An extended version of the paper can be found here: TBA.
+An extended version of the paper can be found here: Will be added soon.
 
 The paper authors are: Samyon Ristov from The Hebrew University of Jerusalem, Yaron Weinsberg from Microsoft, Danny Dolev from The Hebrew University of Jerusalem and Tal Anker from Mellanox Technologies.
 
@@ -30,6 +30,8 @@ We ran under the code with Ubuntu 14.10, kernel 3.16.0-43 with OFED version 3.18
 
 ## Known issues, bugs and missing features
 
+What is needed to improve LogMemcached, and make it production ready:
+
 * prepend and append command's items does not replicate well - the items are replicated fine, but they are allocated twice. First, there is an allocation in "process_update_command" in memcached.c, see "FIXME" comment near "item_alloc". Then, they are alloceted again in "do_store_item" in memcached.c. The allocated item in process_update_command will stay "ITEM_DIRTY" forever, crushing the replication process. Without replication, the system will work fine (one prepend/append item will stay "ITEM_DIRTY" and the other one will be stored normally).
 * during replication, the systems waits for "ITEM_DIRTY" flag to disappear - it make sense, but what if because of some problem, an item stayed in "ITEM_DIRTY" state forever? Like in the bug above? This will cause the replication process to crush. The system should wait some time until the "ITEM_DIRTY" flag is removed, and if it's not removed, to keep further if possible, or to ping the master that some problem occurred - causing the master to mark the item with "ITEM_CORRUPTED" flag. Beware of consistency problems here.
 * memory ghost - sometimes, during replications, weird things are happening. One such place is "do_store_replication" in memcached.c, see "FIXME" comment there. safe_buf (and buf) sometimes, every hundreds of thousands of reads is modified during the run. For example, there is an 'if' statement (if ((flags & ITEM_STORED) && !(flags & ITEM_DIRTY) && !(flags & ITEM_CYCLE))) that shows that it->it_data_flags is not ITEM_STORED, but then, during the run, in the last 'else' statement in that 'if' statement, it->it_data_flags is ITEM_STORED - hence, someone modified it. As a patch for now, the flag to the stack before doing any comparison (i.e. there is no direct comparison to safe_buf (or buf). Probably the problem is caused because the NIC, or some CPU reordering. Not sure. The bug is reproduces easily if the comparison is done to it->it_data_flags directly (i.e. to safe_buf or buf), and there is a client that store big items (32KB or above) nonstop.
@@ -45,6 +47,17 @@ We ran under the code with Ubuntu 14.10, kernel 3.16.0-43 with OFED version 3.18
 * item by item replication - LogMemcached replicate 2MB at a time (max. item's size is 1MB). Instead, it could replicate bigger chunks, making the replication faster. The size of the replicated item should be adjusted to the network and system's requirements in real time.
 * improving the replication benchmark - the benchmark, defined by "REPLICATION_BENCHMARK", can be improved, to give better results.
 * hard coded stuff and consts - many stuff, like some addresses, are hard coded and not configurable. Other stuff should use consts (or #define) instead of being a magic number (like item's min. size and log's remaining size calculation.
+
 ## Extending the research
 
-* TBA
+Ideas to extend the research:
+
+* system's performance on bigger load - the evaluation was performed when the master's CPU is not bounded. Need to run all the tests with higher load. The client's limitations (when it's CPU and network are bounded) should be detected, and the behavior of the system when the server is CPU bounded should be tested.
+* test the system in bigger scale, with more slaves and more clients.
+* need to understand the causes and the mechanics of the CPU increase in the user mode. What exactly causes the increased CPU in the user mode, by how much, when it's stable (under what loads) and how it will behave with more slaves.
+* multiple logs can be used for items with different sizes. That may increase the replication speed because the items' sizes will be known in advance, and they should not be checked after each replication.
+* a scatter/gather techniques may be used to increase the replication process.
+* optimized log management - log compaction algorithms may be considered to increase the replication or to enable adding slaves on-the-fly.
+* stronger consistency - test a system where slaves can signal the master, indicating which items where already copied. The master can acknowledge a "set" command only after a predefined number of slaves copied the item.
+* strong consistency - test the system with a strong consistency by using leader election.
+* RDMA WRITE - test a system which uses RDMA WRITE instead of RDMA READ.
