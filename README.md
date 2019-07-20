@@ -2,7 +2,7 @@
 
 A source code of the paper LogMemcached - An RDMA based Continuous Cache Replication, that was released as part of the KBNets '17 Proceedings of the Workshop on Kernel-Bypass Networks in SIGCOMM.
 
-The original paper can be found here: http://dl.acm.org/citation.cfm?id=3098584
+The original paper can be found here: http://dl.acm.org/citation.cfm?id=3098584 and a free copy can be found here: https://conferences.sigcomm.org/sigcomm/2017/workshop-kbnets.html
 
 An extended version of the paper can be found here: http://arad.mscc.huji.ac.il/dissertations/W/JMC/9920573069103701.pdf
 
