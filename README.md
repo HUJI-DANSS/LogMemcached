@@ -4,7 +4,7 @@ A source code of the paper LogMemcached - An RDMA based Continuous Cache Replica
 
 The original paper can be found here: http://dl.acm.org/citation.cfm?id=3098584
 
-An extended version of the paper can be found here: Will be added soon.
+An extended version of the paper can be found here: http://arad.mscc.huji.ac.il/dissertations/W/JMC/9920573069103701.pdf
 
 The paper authors are: Samyon Ristov from The Hebrew University of Jerusalem, Yaron Weinsberg from Microsoft, Danny Dolev from The Hebrew University of Jerusalem and Tal Anker from Mellanox Technologies.
 
